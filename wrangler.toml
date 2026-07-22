@@ -1,0 +1,6 @@
+name = "built-by"
+compatibility_date = "2024-01-01"
+
+# Serve the built static files from dist/ (v1/credit.js, etc.)
+[assets]
+directory = "./dist"

@@ -104,6 +104,8 @@ Cloudflare Pages watches the GitHub repo. On every push to `main`, it runs `npm 
 
 After that, every push to `main` redeploys automatically.
 
+**If you created a Worker instead of Pages:** the build may succeed but deploy fails on `wrangler deploy` with a Vite config error. Either recreate the project as **Pages** (recommended — no deploy command, just build + output `dist`), or keep the Worker, set **Framework preset** to **None**, and ensure `wrangler.toml` is in the repo (static assets only).
+
 ### Smoke test
 
 Paste the embed snippet into any HTML page. Confirm the icon and label render, the theme looks right, and clicking the link opens byhandbook.com with the UTM parameters you expect.
