@@ -13,8 +13,10 @@ This repo hosts the embed script and assets. It is meant for **client site foote
 
 | Attribute | Values | Description |
 |-----------|--------|-------------|
-| `data-theme` | `light` or `dark` | `light` = black mark and text. `dark` = white mark and text (includes hover animation). |
-| `data-project` | optional string | Short slug for analytics, e.g. `bloomfilter`. Becomes the `utm_campaign` on the link. |
+| `data-theme` | `light` or `dark` | `light` = black text on light footers. `dark` = white text on dark footers (hover Lottie). |
+| `data-project` | optional string | Slug for analytics (`utm_campaign`). |
+| `data-mark-size` | pixels (optional) | Logo size. Default `24`. Range 16–40. |
+| `data-text-size` | pixels (optional) | Label size. Default `16`. Range 12–22. |
 
 The credit links to [byhandbook.com](https://byhandbook.com) with UTM parameters (see below).
 

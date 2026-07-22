@@ -18,8 +18,24 @@ If you prefer the element directly:
 
 ## Themes
 
-- **`dark`** — white text and mark. Use on dark footer backgrounds. Hover Lottie enabled.
-- **`light`** — black (`#0D0D0D`) text and mark. Use on light footer backgrounds.
+- **`dark`** — white label. Full app icon frame with hover Lottie (same pattern as handbook.com nav). Use on dark footers.
+- **`light`** — black label and full black app icon. Use on light footers. Static icon only (no Lottie).
+
+## Sizing (optional)
+
+```html
+<div
+  data-handbook-credit
+  data-theme="light"
+  data-mark-size="24"
+  data-text-size="16"
+></div>
+```
+
+| Attribute | Default | Range |
+|-----------|---------|--------|
+| `data-mark-size` | `24` | 16–40 px |
+| `data-text-size` | `16` | 12–22 px |
 
 ## Analytics
 

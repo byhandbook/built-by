@@ -1,9 +1,20 @@
-import { normalizeTheme, resolveScriptBase, type CreditTheme } from "./config";
+import {
+  DEFAULT_MARK_SIZE,
+  DEFAULT_TEXT_SIZE,
+  normalizeTheme,
+  parsePixelSize,
+  resolveScriptBase,
+  type CreditTheme,
+} from "./config";
 import { sendRegistryPing } from "./ping";
 import { mountHoverLottie } from "./lottie-hover";
 
-const MARK_PATH =
-  "M100.209 117.917C101.083 118.504 102.264 118.332 102.931 117.517L138.94 73.8368C139.73 72.8787 138.99 71.4464 137.75 71.5353L123.131 70.7648C122.054 70.7055 121.046 71.2982 120.572 72.2712L99.5474 115.25C99.0485 116.178 99.335 117.334 100.209 117.922V117.917Z M109.253 125.238L159.235 98.662C160.331 98.0792 160.193 96.4692 159.017 96.079L146.354 91.876C145.169 91.4809 143.86 91.7229 142.892 92.5131L106.996 121.84C106.181 122.507 106.003 123.683 106.586 124.562C107.169 125.441 108.324 125.732 109.253 125.238Z M108.21 131.18C108.408 132.217 109.361 132.928 110.408 132.834L164.064 127.673C165.299 127.559 165.798 126.023 164.864 125.208L154.819 116.432C153.875 115.607 152.576 115.326 151.376 115.681L109.637 128.834C108.625 129.13 108.008 130.147 108.205 131.185L108.21 131.18Z M165.396 138.383H102.479C101.091 130.683 97.3819 123.526 91.7762 117.921L117.824 51.4872C118.353 50.5735 117.691 49.4326 116.639 49.4326H62.3797C61.1104 49.4326 59.9399 50.1092 59.3028 51.2057L40.4213 100.294C39.0335 103.953 41.74 107.875 45.6516 107.875H82.0021C85.0247 110.532 83.1825 113.9 80.555 113.9H37.9815C36.5541 113.9 35.3638 114.192 34.6526 115.51C33.9414 116.829 34.0945 118.874 35.4774 120.533C36.0602 121.23 36.6134 121.946 37.1418 122.682C41.8388 129.216 44.4169 137.098 44.4169 145.253V146.779C44.4169 148.157 45.5331 149.273 46.911 149.273H103.071L103.096 149.352V149.273H165.396C166.151 149.273 166.764 148.66 166.764 147.905V139.756C166.764 139 166.151 138.388 165.396 138.388V138.383Z";
+const H_PATHS = `
+  <path d="M100.209 117.917C101.083 118.504 102.264 118.332 102.931 117.517L138.94 73.8368C139.73 72.8787 138.99 71.4464 137.75 71.5353L123.131 70.7648C122.054 70.7055 121.046 71.2982 120.572 72.2712L99.5474 115.25C99.0485 116.178 99.335 117.334 100.209 117.922V117.917Z" fill="currentColor"/>
+  <path d="M109.253 125.238L159.235 98.662C160.331 98.0792 160.193 96.4692 159.017 96.079L146.354 91.876C145.169 91.4809 143.86 91.7229 142.892 92.5131L106.996 121.84C106.181 122.507 106.003 123.683 106.586 124.562C107.169 125.441 108.324 125.732 109.253 125.238Z" fill="currentColor"/>
+  <path d="M108.21 131.18C108.408 132.217 109.361 132.928 110.408 132.834L164.064 127.673C165.299 127.559 165.798 126.023 164.864 125.208L154.819 116.432C153.875 115.607 152.576 115.326 151.376 115.681L109.637 128.834C108.625 129.13 108.008 130.147 108.205 131.185L108.21 131.18Z" fill="currentColor"/>
+  <path d="M165.396 138.383H102.479C101.091 130.683 97.3819 123.526 91.7762 117.921L117.824 51.4872C118.353 50.5735 117.691 49.4326 116.639 49.4326H62.3797C61.1104 49.4326 59.9399 50.1092 59.3028 51.2057L40.4213 100.294C39.0335 103.953 41.74 107.875 45.6516 107.875H82.0021C85.0247 110.532 83.1825 113.9 80.555 113.9H37.9815C36.5541 113.9 35.3638 114.192 34.6526 115.51C33.9414 116.829 34.0945 118.874 35.4774 120.533C36.0602 121.23 36.6134 121.946 37.1418 122.682C41.8388 129.216 44.4169 137.098 44.4169 145.253V146.779C44.4169 148.157 45.5331 149.273 46.911 149.273H103.071L103.096 149.352V149.273H165.396C166.151 149.273 166.764 148.66 166.764 147.905V139.756C166.764 139 166.151 138.388 165.396 138.388V138.383Z" fill="currentColor"/>
+`;
 
 const STYLES = `
   :host {
@@ -12,29 +23,37 @@ const STYLES = `
   }
 
   .credit {
+    --hb-mark-size: 24px;
+    --hb-text-size: 16px;
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.5rem;
     text-decoration: none;
     color: inherit;
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 14px;
+    font-size: var(--hb-text-size);
     font-weight: 500;
     letter-spacing: 0.02em;
     line-height: 1;
     white-space: nowrap;
+    transition: opacity 0.18s ease;
+  }
+
+  .credit:hover {
+    opacity: 0.82;
   }
 
   .credit:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 3px;
     border-radius: 2px;
+    opacity: 1;
   }
 
   .mark-wrap {
     position: relative;
-    width: 14px;
-    height: 14px;
+    width: var(--hb-mark-size);
+    height: var(--hb-mark-size);
     flex-shrink: 0;
   }
 
@@ -51,16 +70,17 @@ const STYLES = `
   }
 
   .mark-lottie {
+    inset: 5%;
     opacity: 0;
     pointer-events: none;
   }
 
-  .credit.is-lottie-ready .mark-static {
-    opacity: 0;
-  }
-
   .credit.is-lottie-ready .mark-lottie {
     opacity: 1;
+  }
+
+  .credit.is-lottie-ready .mark-static path {
+    opacity: 0;
   }
 
   .credit[data-theme="dark"] {
@@ -74,6 +94,10 @@ const STYLES = `
   @media (prefers-reduced-motion: reduce) {
     .mark-lottie {
       display: none;
+    }
+
+    .credit:hover {
+      opacity: 1;
     }
   }
 `;
@@ -93,17 +117,17 @@ function getAnimationUrl(): string {
   return `${resolveScriptBase()}assets/hb-hover-w.json`;
 }
 
-function staticMarkSvg(theme: CreditTheme): string {
-  const stroke = theme === "dark" ? "#ffffff" : "#0d0d0d";
-  const fill = theme === "dark" ? "#ffffff" : "#0d0d0d";
-  return `<svg viewBox="34 49 133 101" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <rect x="34.65" y="49.43" width="131.75" height="99.84" rx="12" fill="none" stroke="${stroke}" stroke-width="4.8"/>
-    <path d="${MARK_PATH}" fill="${fill}"/>
+/** Full Handbook app icon — same structure as brand SVG. */
+function logoSvg(): string {
+  return `<svg viewBox="0 0 201 201" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="201" height="201" rx="26.5055" fill="#0D0D0D"/>
+    <rect x="9.93965" y="9.94014" width="181.121" height="181.121" rx="23.1923" fill="none" stroke="#FFFFFF" stroke-width="6.62637"/>
+    ${H_PATHS.replace(/fill="currentColor"/g, 'fill="#FFFFFF"')}
   </svg>`;
 }
 
 export class HandbookCredit extends HTMLElement {
-  static observedAttributes = ["theme", "project"];
+  static observedAttributes = ["theme", "project", "mark-size", "text-size"];
 
   private mounted = false;
 
@@ -126,17 +150,27 @@ export class HandbookCredit extends HTMLElement {
     return value || undefined;
   }
 
+  private get markSize(): number {
+    return parsePixelSize(this.getAttribute("mark-size"), DEFAULT_MARK_SIZE, 16, 40);
+  }
+
+  private get textSize(): number {
+    return parsePixelSize(this.getAttribute("text-size"), DEFAULT_TEXT_SIZE, 12, 22);
+  }
+
   private render(): void {
     const theme = this.theme;
     const project = this.project;
+    const markSize = this.markSize;
+    const textSize = this.textSize;
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" });
     const href = buildUtmUrl(project);
 
     shadow.innerHTML = `
       <style>${STYLES}</style>
-      <a class="credit" data-theme="${theme}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Built by Handbook — opens byhandbook.com">
+      <a class="credit" data-theme="${theme}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Built by Handbook — opens byhandbook.com" style="--hb-mark-size: ${markSize}px; --hb-text-size: ${textSize}px;">
         <span class="mark-wrap">
-          <span class="mark-static">${staticMarkSvg(theme)}</span>
+          <span class="mark-static">${logoSvg()}</span>
           <span class="mark-lottie" data-lottie-host></span>
         </span>
         <span class="label">built by handbook</span>
@@ -173,9 +207,13 @@ export function upgradeMountPoints(): void {
     const credit = document.createElement("handbook-credit");
     const theme = node.getAttribute("data-theme") ?? node.dataset.theme;
     const project = node.getAttribute("data-project") ?? node.dataset.project;
+    const markSize = node.getAttribute("data-mark-size") ?? node.dataset.markSize;
+    const textSize = node.getAttribute("data-text-size") ?? node.dataset.textSize;
 
     if (theme) credit.setAttribute("theme", theme);
     if (project) credit.setAttribute("project", project);
+    if (markSize) credit.setAttribute("mark-size", markSize);
+    if (textSize) credit.setAttribute("text-size", textSize);
 
     node.replaceWith(credit);
   });

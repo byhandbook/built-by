@@ -4,6 +4,9 @@ export const DEFAULT_CDN_BASE = "https://builtby.byhandbook.com/v1";
 /** Optional registry ping endpoint (Cloudflare Worker). */
 export const DEFAULT_REGISTRY_URL = "https://builtby.byhandbook.com/r";
 
+export const DEFAULT_MARK_SIZE = 24;
+export const DEFAULT_TEXT_SIZE = 16;
+
 export type CreditTheme = "light" | "dark";
 
 export interface PingPayload {
@@ -23,4 +26,17 @@ export function resolveScriptBase(): string {
 
 export function normalizeTheme(value: string | null | undefined): CreditTheme {
   return value === "light" ? "light" : "dark";
+}
+
+/** Parse a pixel size from a data attribute; fall back if invalid. */
+export function parsePixelSize(
+  value: string | null | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
 }
