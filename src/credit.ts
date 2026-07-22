@@ -1,13 +1,13 @@
 import {
   DEFAULT_MARK_SIZE,
   DEFAULT_TEXT_SIZE,
+  isAnimateEnabled,
   normalizeTheme,
   parsePixelSize,
   resolveScriptBase,
   type CreditTheme,
 } from "./config";
 import { sendRegistryPing } from "./ping";
-import { destroyLottie, mountHoverLottie } from "./lottie-hover";
 import type { AnimationItem } from "lottie-web";
 
 const H_PATHS = `
@@ -16,6 +16,8 @@ const H_PATHS = `
   <path d="M108.21 131.18C108.408 132.217 109.361 132.928 110.408 132.834L164.064 127.673C165.299 127.559 165.798 126.023 164.864 125.208L154.819 116.432C153.875 115.607 152.576 115.326 151.376 115.681L109.637 128.834C108.625 129.13 108.008 130.147 108.205 131.185L108.21 131.18Z" fill="#FFFFFF"/>
   <path d="M165.396 138.383H102.479C101.091 130.683 97.3819 123.526 91.7762 117.921L117.824 51.4872C118.353 50.5735 117.691 49.4326 116.639 49.4326H62.3797C61.1104 49.4326 59.9399 50.1092 59.3028 51.2057L40.4213 100.294C39.0335 103.953 41.74 107.875 45.6516 107.875H82.0021C85.0247 110.532 83.1825 113.9 80.555 113.9H37.9815C36.5541 113.9 35.3638 114.192 34.6526 115.51C33.9414 116.829 34.0945 118.874 35.4774 120.533C36.0602 121.23 36.6134 121.946 37.1418 122.682C41.8388 129.216 44.4169 137.098 44.4169 145.253V146.779C44.4169 148.157 45.5331 149.273 46.911 149.273H103.071L103.096 149.352V149.273H165.396C166.151 149.273 166.764 148.66 166.764 147.905V139.756C166.764 139 166.151 138.388 165.396 138.388V138.383Z" fill="#FFFFFF"/>
 `;
+
+type AnimateModule = typeof import("./lottie-hover");
 
 /* Secondary type (Ftsystem) — system stack only; no font files loaded on client sites. */
 const STYLES = `
@@ -52,7 +54,13 @@ const STYLES = `
     width: var(--hb-mark-size);
     height: var(--hb-mark-size);
     flex-shrink: 0;
-    overflow: visible;
+  }
+
+  .mark-wrap svg,
+  .mark-frame svg {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   .mark-frame {
@@ -60,12 +68,6 @@ const STYLES = `
     inset: 0;
     z-index: 1;
     pointer-events: none;
-  }
-
-  .mark-frame svg {
-    display: block;
-    width: 100%;
-    height: 100%;
   }
 
   .mark-lottie {
@@ -77,9 +79,6 @@ const STYLES = `
   }
 
   .mark-lottie svg {
-    display: block;
-    width: 100%;
-    height: 100%;
     overflow: visible !important;
   }
 
@@ -89,12 +88,6 @@ const STYLES = `
 
   .credit[data-theme="light"] {
     color: #0d0d0d;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .mark-lottie {
-      display: none;
-    }
   }
 `;
 
@@ -113,6 +106,13 @@ function getAnimationUrl(): string {
   return `${resolveScriptBase()}assets/hb-hover-w.json`;
 }
 
+function loadAnimateModule(): Promise<AnimateModule> {
+  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+    return import("./lottie-hover");
+  }
+  return import(/* @vite-ignore */ `${resolveScriptBase()}credit-animate.js`);
+}
+
 function frameSvg(): string {
   return `<svg viewBox="0 0 201 201" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <rect width="201" height="201" rx="26.5055" fill="#0D0D0D"/>
@@ -129,11 +129,13 @@ function fullLogoSvg(): string {
 }
 
 export class HandbookCredit extends HTMLElement {
-  static observedAttributes = ["theme", "project", "mark-size", "text-size"];
+  static observedAttributes = ["theme", "project", "mark-size", "text-size", "animate"];
 
   private mounted = false;
+  private animateModule: AnimateModule | null = null;
   private lottieAnim: AnimationItem | null = null;
-  private idleId: number | null = null;
+  private animateLoading = false;
+  private hoverListener: (() => void) | null = null;
 
   connectedCallback(): void {
     if (this.mounted) return;
@@ -142,12 +144,7 @@ export class HandbookCredit extends HTMLElement {
   }
 
   disconnectedCallback(): void {
-    if (this.idleId !== null && "cancelIdleCallback" in window) {
-      cancelIdleCallback(this.idleId);
-      this.idleId = null;
-    }
-    destroyLottie(this.lottieAnim);
-    this.lottieAnim = null;
+    this.teardownAnimate();
   }
 
   attributeChangedCallback(): void {
@@ -171,33 +168,51 @@ export class HandbookCredit extends HTMLElement {
     return parsePixelSize(this.getAttribute("text-size"), DEFAULT_TEXT_SIZE, 12, 22);
   }
 
-  private render(): void {
-    destroyLottie(this.lottieAnim);
+  private get wantsAnimate(): boolean {
+    return isAnimateEnabled(this.getAttribute("animate"));
+  }
+
+  private teardownAnimate(): void {
+    if (this.hoverListener) {
+      const link = this.shadowRoot?.querySelector(".credit");
+      if (link) link.removeEventListener("mouseenter", this.hoverListener);
+      this.hoverListener = null;
+    }
+    if (this.animateModule) {
+      this.animateModule.destroyLottie(this.lottieAnim);
+    }
     this.lottieAnim = null;
+    this.animateModule = null;
+    this.animateLoading = false;
+  }
+
+  private render(): void {
+    this.teardownAnimate();
 
     const theme = this.theme;
     const project = this.project;
     const markSize = this.markSize;
     const textSize = this.textSize;
+    const animate = this.wantsAnimate;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const useAnimate = animate && !reducedMotion;
     const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" });
     const href = buildUtmUrl(project);
-    const frameMarkup = reducedMotion ? fullLogoSvg() : frameSvg();
+
+    const markMarkup = useAnimate
+      ? `<span class="mark-frame">${frameSvg()}</span><span class="mark-lottie" data-lottie-host></span>`
+      : fullLogoSvg();
 
     shadow.innerHTML = `
       <style>${STYLES}</style>
       <a class="credit" data-theme="${theme}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Built by Handbook — opens byhandbook.com" style="--hb-mark-size: ${markSize}px; --hb-text-size: ${textSize}px;">
-        <span class="mark-wrap">
-          <span class="mark-frame">${frameMarkup}</span>
-          <span class="mark-lottie" data-lottie-host></span>
-        </span>
+        <span class="mark-wrap">${markMarkup}</span>
         <span class="label">built by handbook</span>
       </a>
     `;
 
     const link = shadow.querySelector(".credit");
-    const lottieHost = shadow.querySelector<HTMLElement>("[data-lottie-host]");
-    if (!(link instanceof HTMLAnchorElement) || !lottieHost) return;
+    if (!(link instanceof HTMLAnchorElement)) return;
 
     sendRegistryPing({
       host: window.location.hostname,
@@ -206,18 +221,31 @@ export class HandbookCredit extends HTMLElement {
       version: "1",
     });
 
-    if (!reducedMotion) {
-      const mount = () => {
-        this.idleId = null;
-        if (!this.isConnected) return;
-        this.lottieAnim = mountHoverLottie(lottieHost, link, getAnimationUrl());
-      };
-      if ("requestIdleCallback" in window) {
-        this.idleId = requestIdleCallback(mount, { timeout: 2500 });
-      } else {
-        setTimeout(mount, 1);
-      }
-    }
+    if (!useAnimate) return;
+
+    const lottieHost = shadow.querySelector<HTMLElement>("[data-lottie-host]");
+    if (!lottieHost) return;
+
+    this.hoverListener = () => {
+      if (this.lottieAnim || this.animateLoading) return;
+      this.animateLoading = true;
+      const startHovered = link.matches(":hover");
+
+      loadAnimateModule()
+        .then((mod) => {
+          if (!this.isConnected) return;
+          this.animateModule = mod;
+          this.lottieAnim = mod.mountHoverLottie(lottieHost, link, getAnimationUrl(), startHovered);
+        })
+        .catch(() => {
+          /* animation is optional — static frame remains */
+        })
+        .finally(() => {
+          this.animateLoading = false;
+        });
+    };
+
+    link.addEventListener("mouseenter", this.hoverListener);
   }
 }
 
@@ -240,6 +268,9 @@ export function upgradeMountPoints(): void {
     if (project) credit.setAttribute("project", project);
     if (markSize) credit.setAttribute("mark-size", markSize);
     if (textSize) credit.setAttribute("text-size", textSize);
+    if (node.hasAttribute("data-animate")) {
+      credit.setAttribute("animate", node.getAttribute("data-animate") ?? "");
+    }
 
     node.replaceWith(credit);
   });

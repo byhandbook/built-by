@@ -1,6 +1,6 @@
 # Built by Handbook
 
-A small footer credit for sites Handbook designs and builds. Drop in a script tag, pick light or dark, and it renders a 14px **built by handbook** label with the Handbook mark. On dark backgrounds, the mark animates on hover.
+A small footer credit for sites Handbook designs and builds. Drop in a script tag, pick light or dark, and it renders a **built by handbook** label with the Handbook app icon. Static by default — no animation weight on client pages unless you opt in.
 
 This repo hosts the embed script and assets. It is meant for **client site footers**, not the Handbook marketing site.
 
@@ -13,10 +13,11 @@ This repo hosts the embed script and assets. It is meant for **client site foote
 
 | Attribute | Values | Description |
 |-----------|--------|-------------|
-| `data-theme` | `light` or `dark` | `light` = black text on light footers. `dark` = white text on dark footers (hover Lottie). |
+| `data-theme` | `light` or `dark` | `light` = black text on light footers. `dark` = white text on dark footers. |
 | `data-project` | optional string | Slug for analytics (`utm_campaign`). |
 | `data-mark-size` | pixels (optional) | Logo size. Default `24`. Range 16–40. |
 | `data-text-size` | pixels (optional) | Label size. Default `16`. Range 12–22. |
+| `data-animate` | optional flag | Hover Lottie loads on first hover only (~225 KB total). Omit for static default (~3 KB gzip). |
 
 The credit links to [byhandbook.com](https://byhandbook.com) with UTM parameters (see below).
 
@@ -61,8 +62,9 @@ npm run build
 
 Output:
 
-- `dist/v1/credit.js`
-- `dist/v1/assets/hb-hover-w.json`
+- `dist/v1/credit.js` (~3 KB gzip — static default)
+- `dist/v1/credit-animate.js` (optional — only when `data-animate` is set)
+- `dist/v1/assets/hb-hover-w.json` (optional — loaded on first hover with animate)
 
 Deploy the **`dist`** folder to Cloudflare Pages. Files will be served at `/v1/credit.js` on your custom domain.
 
@@ -83,7 +85,8 @@ Hosting lives on **`builtby.byhandbook.com`** so it stays separate from the main
 After deploy, verify:
 
 - `https://builtby.byhandbook.com/v1/credit.js`
-- `https://builtby.byhandbook.com/v1/assets/hb-hover-w.json`
+- `https://builtby.byhandbook.com/v1/credit-animate.js` (optional)
+- `https://builtby.byhandbook.com/v1/assets/hb-hover-w.json` (optional)
 
 **Version path:** Client embeds use `/v1/credit.js`. Run `npm run build` — the bundle is staged under `dist/v1/` automatically. Point Cloudflare Pages at the `dist` output directory.
 

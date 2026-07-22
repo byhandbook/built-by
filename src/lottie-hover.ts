@@ -1,8 +1,12 @@
 import type { AnimationItem } from "lottie-web";
 import lottie from "lottie-web";
 
-export function wireLottieHover(anim: AnimationItem, trigger: HTMLElement): void {
-  let hovering = false;
+export function wireLottieHover(
+  anim: AnimationItem,
+  trigger: HTMLElement,
+  startHovered = false,
+): void {
+  let hovering = startHovered;
   let raf: number | null = null;
 
   const cancelRaf = () => {
@@ -21,6 +25,11 @@ export function wireLottieHover(anim: AnimationItem, trigger: HTMLElement): void
     anim.setDirection(1);
     anim.play();
   });
+
+  if (startHovered) {
+    anim.setDirection(1);
+    anim.play();
+  }
 
   trigger.addEventListener("mouseleave", () => {
     hovering = false;
@@ -47,6 +56,7 @@ export function mountHoverLottie(
   container: HTMLElement,
   trigger: HTMLElement,
   animationUrl: string,
+  startHovered = false,
 ): AnimationItem | null {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
 
@@ -64,7 +74,7 @@ export function mountHoverLottie(
 
   const finish = () => {
     anim.goToAndStop(0, true);
-    wireLottieHover(anim, trigger);
+    wireLottieHover(anim, trigger, startHovered);
   };
 
   if (anim.isLoaded) finish();

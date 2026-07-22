@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist/v1/assets && cp dist/credit.js dist/v1/credit.js && cp assets/hb-hover-w.json dist/v1/assets/hb-hover-w.json && rm dist/credit.js",
+    "build": "vite build && vite build --config vite.animate.config.ts && mkdir -p dist/v1/assets && cp dist/credit.js dist/v1/credit.js && cp dist/credit-animate.js dist/v1/credit-animate.js && cp assets/hb-hover-w.json dist/v1/assets/hb-hover-w.json && rm dist/credit.js dist/credit-animate.js",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

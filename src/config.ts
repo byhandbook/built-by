@@ -40,3 +40,10 @@ export function parsePixelSize(
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(max, Math.max(min, parsed));
 }
+
+/** True when animate / data-animate is present (empty, "1", or "true"). */
+export function isAnimateEnabled(value: string | null | undefined): boolean {
+  if (value === null || value === undefined) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "" || normalized === "1" || normalized === "true";
+}
