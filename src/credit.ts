@@ -23,6 +23,8 @@ const STYLES = `
   :host {
     display: inline-block;
     line-height: 1;
+    cursor: pointer;
+    vertical-align: middle;
   }
 
   .credit {
@@ -33,6 +35,7 @@ const STYLES = `
     gap: 0.5rem;
     text-decoration: none;
     color: inherit;
+    cursor: pointer;
     font-family: Helvetica, Arial, sans-serif;
     font-size: var(--hb-text-size);
     font-weight: 400;
