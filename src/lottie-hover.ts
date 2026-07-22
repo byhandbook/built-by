@@ -47,6 +47,7 @@ export function mountHoverLottie(
   container: HTMLElement,
   trigger: HTMLElement,
   animationUrl: string,
+  onReady?: () => void,
 ): AnimationItem | null {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
 
@@ -56,15 +57,28 @@ export function mountHoverLottie(
     loop: false,
     autoplay: false,
     path: animationUrl,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid meet",
+    },
   });
 
   const finish = () => {
     anim.goToAndStop(0, true);
     wireLottieHover(anim, trigger);
+    onReady?.();
   };
 
   if (anim.isLoaded) finish();
   else anim.addEventListener("DOMLoaded", finish);
 
   return anim;
+}
+
+export function destroyLottie(anim: AnimationItem | null): void {
+  if (!anim) return;
+  try {
+    anim.destroy();
+  } catch {
+    /* already destroyed */
+  }
 }

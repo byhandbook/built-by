@@ -18,8 +18,12 @@ If you prefer the element directly:
 
 ## Themes
 
-- **`dark`** — white label. Full app icon frame with hover Lottie (same pattern as handbook.com nav). Use on dark footers.
-- **`light`** — black label and full black app icon. Use on light footers. Static icon only (no Lottie).
+Both themes use the same icon: the Handbook app icon (black square, white mark) with hover Lottie inside. `data-theme` only changes the **label color**.
+
+- **`light`** — black “built by handbook” text. Use on light footers.
+- **`dark`** — white “built by handbook” text. Use on dark footers (the icon’s black fill blends into the footer; the white ring and mark stay visible).
+
+Typography is **FT System Mono**, loaded from the embed CDN.
 
 ## Sizing (optional)
 
