@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist/assets && cp assets/hb-hover-w.json dist/assets/hb-hover-w.json",
+    "build": "vite build && mkdir -p dist/v1/assets && cp dist/credit.js dist/v1/credit.js && cp assets/hb-hover-w.json dist/v1/assets/hb-hover-w.json && rm dist/credit.js",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

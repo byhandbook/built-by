@@ -1,106 +1,108 @@
 # Built by Handbook
 
-Embeddable footer credit for client sites — small logo, 14px mono label, hover Lottie, and a registry ping so you know where it's installed.
+A small footer credit for sites Handbook designs and builds. Drop in a script tag, pick light or dark, and it renders a 14px **built by handbook** label with the Handbook mark. On dark backgrounds, the mark animates on hover.
 
-**Not used on handbook.com itself.** Drop into client footers only.
+This repo hosts the embed script and assets. It is meant for **client site footers**, not the Handbook marketing site.
 
-## Quick embed
+## Embed
 
 ```html
 <div data-handbook-credit data-theme="dark" data-project="client-slug"></div>
-<script async src="https://builtby.handbook.com/v1/credit.js"></script>
+<script async src="https://builtby.byhandbook.com/v1/credit.js"></script>
 ```
 
-- `data-theme="dark"` — white mark + text (for dark footers). Hover Lottie enabled.
-- `data-theme="light"` — Handbook black (`#0D0D0D`) mark + text (for light footers). Static mark on hover for now (Lottie asset is white-on-transparent).
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-theme` | `light` or `dark` | `light` = black mark and text. `dark` = white mark and text (includes hover animation). |
+| `data-project` | optional string | Short slug for analytics, e.g. `bloomfilter`. Becomes the `utm_campaign` on the link. |
 
-See [docs/embed.md](./docs/embed.md) for full options.
+The credit links to [byhandbook.com](https://byhandbook.com) with UTM parameters (see below).
 
-## Development
+## Link parameters
+
+Every credit is a link. The URL is built automatically:
+
+| Parameter | Value | Purpose |
+|-----------|--------|---------|
+| `utm_source` | `builtby` | Identifies traffic from this embed |
+| `utm_medium` | `footer` | Identifies placement |
+| `utm_campaign` | your `data-project` value | Identifies which client site (only if `data-project` is set) |
+
+**Example** with `data-project="bloomfilter"`:
+
+```
+https://byhandbook.com/?utm_source=builtby&utm_medium=footer&utm_campaign=bloomfilter
+```
+
+**Example** without `data-project`:
+
+```
+https://byhandbook.com/?utm_source=builtby&utm_medium=footer
+```
+
+If you use Google Analytics on byhandbook.com, these show up under acquisition reports for footer credit clicks. That is usually enough to see which installs drive traffic — no separate dashboard required at small scale.
+
+## Local preview
 
 ```bash
 npm install
-npm run dev      # preview at localhost:5173
-npm run build    # outputs dist/credit.js + dist/assets/hb-hover-w.json
+npm run dev
 ```
 
-## Deploy (CDN)
+Open [http://localhost:5173](http://localhost:5173). The preview page shows light and dark variants side by side.
 
-1. Run `npm run build`
-2. Upload `dist/credit.js` and `dist/assets/` to `builtby.handbook.com/v1/`
-3. Deploy the registry worker (see below)
-
-Pin client embeds to a version path (`/v1/`). Ship breaking changes as `/v2/`.
-
-## Registry worker
-
-The credit sends **one load ping per browser session** when it appears on a page:
-
-```
-GET /r?host=client.com&theme=dark&v=1&project=bloomfilter
-```
-
-Cloudflare Worker + KV scaffold lives in [`worker/`](./worker/). After deploy:
-
-- `GET /r` — ingest ping (called by the embed)
-- `GET /installs` — JSON list of known installs (**lock this down before prod**)
+Production build:
 
 ```bash
-cd worker
-npx wrangler kv namespace create INSTALLS
-# paste id into wrangler.toml
-npx wrangler deploy
+npm run build
 ```
 
----
+Output:
 
-## Keeping on top of installs
+- `dist/v1/credit.js`
+- `dist/v1/assets/hb-hover-w.json`
 
-### Do this
+Deploy the **`dist`** folder to Cloudflare Pages. Files will be served at `/v1/credit.js` on your custom domain.
 
-| Tool | Purpose |
-|------|---------|
-| **Registry (`/r` ping)** | Inventory — which domains load the credit, last seen, version |
-| **GA4 on handbook.com** | Clicks on footer links (UTM: `utm_source=builtby&utm_medium=footer`) |
-| **Linear / Notion table** | Intended installs per client project at launch |
+## Deploy
 
-Check the registry weekly (or wire a simple dashboard). Use GA for traffic insights, not inventory.
+Hosting lives on **`builtby.byhandbook.com`** so it stays separate from the main site on `byhandbook.com`.
 
-### Don't do this
+### 1. Cloudflare Pages (recommended)
 
-**Slack notification on every click** — noisy, not useful, and feels surveillance-y. Clicks are analytics; pings are inventory.
+1. In Cloudflare Dashboard → **Workers & Pages** → **Create** → **Connect to Git**
+2. Select the `byhandbook/built-by` repository
+3. Build settings:
+   - **Build command:** `npm run build`
+   - **Build output directory:** `dist`
+4. Deploy, then add custom domain: **`builtby.byhandbook.com`**
+5. In DNS for `byhandbook.com`, add a CNAME: `builtby` → your `*.pages.dev` hostname (Cloudflare usually does this when you attach the domain)
 
-**Slack on every page load ping** — also noisy. If you want Slack at all:
+After deploy, verify:
 
-- Daily digest cron (Worker → `#builtby-installs`: "3 new domains this week")
-- Alert only when a **known** install goes stale for 30+ days
-- Alert when a **new** domain appears and isn't in your project list
+- `https://builtby.byhandbook.com/v1/credit.js`
+- `https://builtby.byhandbook.com/v1/assets/hb-hover-w.json`
 
-### Privacy & client sites
+**Version path:** Client embeds use `/v1/credit.js`. Run `npm run build` — the bundle is staged under `dist/v1/` automatically. Point Cloudflare Pages at the `dist` output directory.
 
-The ping collects:
+### 2. Test on a real page
 
-- `host` (e.g. `bloomfilter.com`)
-- optional `project` slug you set
-- `theme`, embed `version`
+Paste the embed snippet into any site footer (or a static HTML file). Use `data-theme` to match the footer background. Click through and confirm the byhandbook.com URL includes the UTM params you expect.
 
-It does **not** collect user IDs, cookies, or page paths. It's comparable to a favicon request or "powered by Stripe" badge phone-home — still disclose in your embed docs / client agreements if required.
+### 3. Registry worker (optional)
 
-For strict CSP clients, use the static HTML fallback in `docs/` (no external script, no ping).
+The embed can send a one-time-per-session ping (`host`, `theme`, optional `project`) to a Cloudflare Worker for an install list. This is **optional** — the embed works without it. See [`worker/`](./worker/) if you want that later at higher volume. You do not need it to ship v1.
 
----
-
-## Repo layout
+## Project structure
 
 ```
-assets/           # Lottie JSON (from handbook-website)
-src/              # Web component + loader
-dist/             # Built embed (gitignored)
-worker/           # Cloudflare registry
-docs/             # Embed snippets
-index.html        # Local preview (light + dark)
+src/        Web component and loader
+assets/     Lottie animation
+dist/       Production bundle (generated)
+worker/     Optional install registry (Cloudflare)
+docs/       Additional embed notes
 ```
 
 ## License
 
-Proprietary — Handbook. Client embed is public; assets are Handbook brand.
+© Handbook. The Handbook mark and name are brand assets. Client use is limited to the provided embed as agreed in project terms.

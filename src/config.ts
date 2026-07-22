@@ -1,8 +1,8 @@
-/** Default CDN base — override at build time via Vite define if needed. */
-export const DEFAULT_CDN_BASE = "https://builtby.handbook.com/v1";
+/** Default CDN base when script origin cannot be detected. */
+export const DEFAULT_CDN_BASE = "https://builtby.byhandbook.com/v1";
 
-/** Registry ping endpoint (Cloudflare Worker). */
-export const DEFAULT_REGISTRY_URL = "https://builtby.handbook.com/r";
+/** Optional registry ping endpoint (Cloudflare Worker). */
+export const DEFAULT_REGISTRY_URL = "https://builtby.byhandbook.com/r";
 
 export type CreditTheme = "light" | "dark";
 

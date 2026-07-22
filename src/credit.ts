@@ -79,7 +79,7 @@ const STYLES = `
 `;
 
 function buildUtmUrl(project?: string): string {
-  const url = new URL("https://handbook.com/");
+  const url = new URL("https://byhandbook.com/");
   url.searchParams.set("utm_source", "builtby");
   url.searchParams.set("utm_medium", "footer");
   if (project) url.searchParams.set("utm_campaign", project);
@@ -134,7 +134,7 @@ export class HandbookCredit extends HTMLElement {
 
     shadow.innerHTML = `
       <style>${STYLES}</style>
-      <a class="credit" data-theme="${theme}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Built by Handbook — opens handbook.com">
+      <a class="credit" data-theme="${theme}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Built by Handbook — opens byhandbook.com">
         <span class="mark-wrap">
           <span class="mark-static">${staticMarkSvg(theme)}</span>
           <span class="mark-lottie" data-lottie-host></span>
