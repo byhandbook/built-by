@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Handbook Built-By — Preview</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+      }
+      .panel {
+        min-height: 50vh;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+      }
+      .panel.dark {
+        background: #0d0d0d;
+      }
+      .panel.light {
+        background: #f5f5f0;
+      }
+      h2 {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.5;
+        margin: 0 0 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="panel dark">
+      <div>
+        <h2>data-theme="dark"</h2>
+        <div data-handbook-credit data-theme="dark" data-project="preview"></div>
+      </div>
+    </section>
+    <section class="panel light">
+      <div>
+        <h2>data-theme="light"</h2>
+        <div data-handbook-credit data-theme="light" data-project="preview"></div>
+      </div>
+    </section>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

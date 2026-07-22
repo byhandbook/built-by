@@ -1,0 +1,23 @@
+{
+  "name": "@handbook/built-by",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Embeddable Built by Handbook footer credit",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && mkdir -p dist/assets && cp assets/hb-hover-w.json dist/assets/hb-hover-w.json",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "lottie-web": "^5.13.0"
+  }
+}
