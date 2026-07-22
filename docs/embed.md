@@ -23,7 +23,7 @@ Both themes use the same icon: the Handbook app icon (black square, white mark) 
 - **`light`** — black “built by handbook” text. Use on light footers.
 - **`dark`** — white “built by handbook” text. Use on dark footers (the icon’s black fill blends into the footer; the white ring and mark stay visible).
 
-Typography is **FT System Mono**, loaded from the embed CDN.
+Typography uses **Helvetica/Arial at 400 weight** with the same letter-spacing as Handbook body text (`0.03em`). The embed does **not** load custom font files on client sites — that keeps third-party weight and FOUT off their pages. It will not be pixel-identical to Ftsystem on handbook.com, but it matches the secondary style closely without shipping a font.
 
 ## Sizing (optional)
 

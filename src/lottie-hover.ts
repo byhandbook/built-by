@@ -1,5 +1,5 @@
 import type { AnimationItem } from "lottie-web";
-import lottie from "lottie-web/build/player/lottie_light";
+import lottie from "lottie-web";
 
 export function wireLottieHover(anim: AnimationItem, trigger: HTMLElement): void {
   let hovering = false;
@@ -47,7 +47,6 @@ export function mountHoverLottie(
   container: HTMLElement,
   trigger: HTMLElement,
   animationUrl: string,
-  onReady?: () => void,
 ): AnimationItem | null {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
 
@@ -59,13 +58,13 @@ export function mountHoverLottie(
     path: animationUrl,
     rendererSettings: {
       preserveAspectRatio: "xMidYMid meet",
+      progressiveLoad: false,
     },
   });
 
   const finish = () => {
     anim.goToAndStop(0, true);
     wireLottieHover(anim, trigger);
-    onReady?.();
   };
 
   if (anim.isLoaded) finish();

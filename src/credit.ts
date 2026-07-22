@@ -17,16 +17,8 @@ const H_PATHS = `
   <path d="M165.396 138.383H102.479C101.091 130.683 97.3819 123.526 91.7762 117.921L117.824 51.4872C118.353 50.5735 117.691 49.4326 116.639 49.4326H62.3797C61.1104 49.4326 59.9399 50.1092 59.3028 51.2057L40.4213 100.294C39.0335 103.953 41.74 107.875 45.6516 107.875H82.0021C85.0247 110.532 83.1825 113.9 80.555 113.9H37.9815C36.5541 113.9 35.3638 114.192 34.6526 115.51C33.9414 116.829 34.0945 118.874 35.4774 120.533C36.0602 121.23 36.6134 121.946 37.1418 122.682C41.8388 129.216 44.4169 137.098 44.4169 145.253V146.779C44.4169 148.157 45.5331 149.273 46.911 149.273H103.071L103.096 149.352V149.273H165.396C166.151 149.273 166.764 148.66 166.764 147.905V139.756C166.764 139 166.151 138.388 165.396 138.388V138.383Z" fill="#FFFFFF"/>
 `;
 
-function styles(fontSrc: string): string {
-  return `
-  @font-face {
-    font-family: "FT System Mono";
-    src: url("${fontSrc}") format("woff2");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-  }
-
+/* Secondary type (Ftsystem) — system stack only; no font files loaded on client sites. */
+const STYLES = `
   :host {
     display: inline-block;
     line-height: 1;
@@ -40,12 +32,13 @@ function styles(fontSrc: string): string {
     gap: 0.5rem;
     text-decoration: none;
     color: inherit;
-    font-family: "FT System Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-family: Helvetica, Arial, sans-serif;
     font-size: var(--hb-text-size);
     font-weight: 400;
-    letter-spacing: 0.02em;
-    line-height: 1;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
     white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
   }
 
   .credit:focus-visible {
@@ -59,23 +52,35 @@ function styles(fontSrc: string): string {
     width: var(--hb-mark-size);
     height: var(--hb-mark-size);
     flex-shrink: 0;
+    overflow: visible;
   }
 
-  .mark-frame,
-  .mark-lottie {
+  .mark-frame {
     position: absolute;
     inset: 0;
+    z-index: 1;
+    pointer-events: none;
   }
 
-  .mark-frame svg,
-  .mark-lottie svg {
+  .mark-frame svg {
     display: block;
     width: 100%;
     height: 100%;
   }
 
   .mark-lottie {
+    position: absolute;
     inset: 5%;
+    z-index: 2;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .mark-lottie svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible !important;
   }
 
   .credit[data-theme="dark"] {
@@ -92,7 +97,6 @@ function styles(fontSrc: string): string {
     }
   }
 `;
-}
 
 function buildUtmUrl(project?: string): string {
   const url = new URL("https://byhandbook.com/");
@@ -109,14 +113,6 @@ function getAnimationUrl(): string {
   return `${resolveScriptBase()}assets/hb-hover-w.json`;
 }
 
-function getFontUrl(): string {
-  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-    return "/fonts/FTSystemMono-Regular.woff2";
-  }
-  return `${resolveScriptBase()}assets/fonts/FTSystemMono-Regular.woff2`;
-}
-
-/** Icon frame only — same as handbook.com nav; Lottie draws the mark inside. */
 function frameSvg(): string {
   return `<svg viewBox="0 0 201 201" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <rect width="201" height="201" rx="26.5055" fill="#0D0D0D"/>
@@ -124,7 +120,6 @@ function frameSvg(): string {
   </svg>`;
 }
 
-/** Static fallback when motion is reduced. */
 function fullLogoSvg(): string {
   return `<svg viewBox="0 0 201 201" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <rect width="201" height="201" rx="26.5055" fill="#0D0D0D"/>
@@ -138,6 +133,7 @@ export class HandbookCredit extends HTMLElement {
 
   private mounted = false;
   private lottieAnim: AnimationItem | null = null;
+  private idleId: number | null = null;
 
   connectedCallback(): void {
     if (this.mounted) return;
@@ -146,6 +142,10 @@ export class HandbookCredit extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    if (this.idleId !== null && "cancelIdleCallback" in window) {
+      cancelIdleCallback(this.idleId);
+      this.idleId = null;
+    }
     destroyLottie(this.lottieAnim);
     this.lottieAnim = null;
   }
@@ -185,7 +185,7 @@ export class HandbookCredit extends HTMLElement {
     const frameMarkup = reducedMotion ? fullLogoSvg() : frameSvg();
 
     shadow.innerHTML = `
-      <style>${styles(getFontUrl())}</style>
+      <style>${STYLES}</style>
       <a class="credit" data-theme="${theme}" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="Built by Handbook — opens byhandbook.com" style="--hb-mark-size: ${markSize}px; --hb-text-size: ${textSize}px;">
         <span class="mark-wrap">
           <span class="mark-frame">${frameMarkup}</span>
@@ -207,7 +207,16 @@ export class HandbookCredit extends HTMLElement {
     });
 
     if (!reducedMotion) {
-      this.lottieAnim = mountHoverLottie(lottieHost, link, getAnimationUrl());
+      const mount = () => {
+        this.idleId = null;
+        if (!this.isConnected) return;
+        this.lottieAnim = mountHoverLottie(lottieHost, link, getAnimationUrl());
+      };
+      if ("requestIdleCallback" in window) {
+        this.idleId = requestIdleCallback(mount, { timeout: 2500 });
+      } else {
+        setTimeout(mount, 1);
+      }
     }
   }
 }

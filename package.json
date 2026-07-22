@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist/v1/assets/fonts && cp dist/credit.js dist/v1/credit.js && cp assets/hb-hover-w.json dist/v1/assets/hb-hover-w.json && cp assets/fonts/FTSystemMono-Regular.woff2 dist/v1/assets/fonts/FTSystemMono-Regular.woff2 && rm dist/credit.js",
+    "build": "vite build && mkdir -p dist/v1/assets && cp dist/credit.js dist/v1/credit.js && cp assets/hb-hover-w.json dist/v1/assets/hb-hover-w.json && rm dist/credit.js",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
