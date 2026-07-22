@@ -2,7 +2,7 @@
   "name": "@handbook/built-by",
   "version": "1.0.0",
   "private": false,
-  "description": "Embeddable Built by Handbook footer credit",
+  "description": "Footer credit embed for Handbook client sites",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,20 +1,10 @@
 /** Default CDN base when script origin cannot be detected. */
 export const DEFAULT_CDN_BASE = "https://builtby.byhandbook.com/v1";
 
-/** Optional registry ping endpoint (Cloudflare Worker). */
-export const DEFAULT_REGISTRY_URL = "https://builtby.byhandbook.com/r";
-
 export const DEFAULT_MARK_SIZE = 24;
 export const DEFAULT_TEXT_SIZE = 16;
 
 export type CreditTheme = "light" | "dark";
-
-export interface PingPayload {
-  host: string;
-  project?: string;
-  theme: CreditTheme;
-  version: string;
-}
 
 export function resolveScriptBase(): string {
   const script = document.currentScript;

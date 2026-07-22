@@ -1,8 +1,0 @@
-{
-  "name": "handbook-builtby-registry",
-  "private": true,
-  "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
-  }
-}

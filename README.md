@@ -1,112 +1,130 @@
 # Built by Handbook
 
-A small footer credit for sites Handbook designs and builds. Drop in a script tag, pick light or dark, and it renders a **built by handbook** label with the Handbook app icon. Static by default — no animation weight on client pages unless you opt in.
+A small footer credit for client sites. The Handbook mark, a short label, and a link to [byhandbook.com](https://byhandbook.com). Nothing else.
 
-This repo hosts the embed script and assets. It is meant for **client site footers**, not the Handbook marketing site.
+This repo holds the embed script. Client sites load it from our CDN — they never touch this repository.
 
-## Embed
+---
+
+## Add it to a site
+
+Drop this in the footer. Match `data-theme` to the footer background.
 
 ```html
 <div data-handbook-credit data-theme="dark" data-project="client-slug"></div>
 <script async src="https://builtby.byhandbook.com/v1/credit.js"></script>
 ```
 
-| Attribute | Values | Description |
-|-----------|--------|-------------|
-| `data-theme` | `light` or `dark` | `light` = black text on light footers. `dark` = white text on dark footers. |
-| `data-project` | optional string | Slug for analytics (`utm_campaign`). |
-| `data-mark-size` | pixels (optional) | Logo size. Default `24`. Range 16–40. |
-| `data-text-size` | pixels (optional) | Label size. Default `16`. Range 12–22. |
-| `data-animate` | optional flag | Hover Lottie loads on first hover only (~225 KB total). Omit for static default (~3 KB gzip). |
+Use a short slug for `data-project` — something like `bloomfilter` or `acme`. It tags the link for analytics so we can see which site a visit came from.
 
-The credit links to [byhandbook.com](https://byhandbook.com) with UTM parameters (see below).
+**Dark footer** → `data-theme="dark"` (white text)
 
-## Link parameters
+**Light footer** → `data-theme="light"` (black text)
 
-Every credit is a link. The URL is built automatically:
+That is the whole integration for most sites.
 
-| Parameter | Value | Purpose |
-|-----------|--------|---------|
-| `utm_source` | `builtby` | Identifies traffic from this embed |
-| `utm_medium` | `footer` | Identifies placement |
-| `utm_campaign` | your `data-project` value | Identifies which client site (only if `data-project` is set) |
+---
 
-**Example** with `data-project="bloomfilter"`:
+## Options
+
+| Attribute | Required | Default | What it does |
+|-----------|----------|---------|--------------|
+| `data-theme` | yes | — | `light` or `dark`. Sets label color. The icon stays the same. |
+| `data-project` | recommended | — | Client slug. Becomes `utm_campaign` on the byhandbook.com link. |
+| `data-mark-size` | no | `24` | Icon size in pixels (16–40). |
+| `data-text-size` | no | `16` | Label size in pixels (12–22). |
+| `data-animate` | no | off | Hover animation. Loads extra files on first hover. Leave off for client sites. |
+
+---
+
+## How it works
+
+1. The `<div>` is a placeholder. It carries the options.
+2. The script loads asynchronously. It does not block the page.
+3. The script replaces the placeholder with a link: Handbook icon + **built by handbook**.
+4. The icon is an inline SVG. No font files. No images. No cookies. No background requests.
+5. The link goes to byhandbook.com with standard UTM parameters (`utm_source=builtby`, `utm_medium=footer`, and `utm_campaign` when `data-project` is set).
+
+**Default weight:** one request, about 3.4 KB gzipped.
+
+**With `data-animate`:** the hover animation loads only after someone hovers the credit. About 230 KB additional, total. We do not recommend this on client sites.
+
+---
+
+## Privacy
+
+This embed is for clients who had a good experience working with Handbook and want to give credit where it is due.
+
+It is intentionally minimal. The script renders a static mark and a link. It does not load custom fonts on the host site. It does not track users, set cookies, or phone home. The only outbound connection beyond the script itself is when someone clicks through to byhandbook.com — the same as any normal link.
+
+If a client prefers not to use it, that is fine. This is a courtesy, not a requirement.
+
+---
+
+## Deploy
+
+Client sites load the embed from **`builtby.byhandbook.com`**. That subdomain serves static files built from this repo. The main Handbook site on `byhandbook.com` is separate and unchanged.
+
+### How the pieces connect
 
 ```
-https://byhandbook.com/?utm_source=builtby&utm_medium=footer&utm_campaign=bloomfilter
+GitHub (byhandbook/built-by)
+        │
+        │  push to main
+        ▼
+Cloudflare Pages  ──builds──▶  dist/v1/credit.js  (+ optional animate assets)
+        │
+        │  custom domain
+        ▼
+builtby.byhandbook.com/v1/credit.js
+        │
+        │  <script async src="…">
+        ▼
+Client site footer
 ```
 
-**Example** without `data-project`:
+Cloudflare Pages watches the GitHub repo. On every push to `main`, it runs `npm run build` and publishes the `dist/` folder. Client embeds point at the resulting URL. When we update the script here, every client site picks up the new version on their next page load — no action needed on their end.
 
-```
-https://byhandbook.com/?utm_source=builtby&utm_medium=footer
-```
+### First-time setup
 
-If you use Google Analytics on byhandbook.com, these show up under acquisition reports for footer credit clicks. That is usually enough to see which installs drive traffic — no separate dashboard required at small scale.
+1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com).
+2. Go to **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+3. Select the **`byhandbook/built-by`** repository.
+4. Set build settings:
+   - **Build command:** `npm run build`
+   - **Build output directory:** `dist`
+   - **Framework preset:** None
+5. Click **Save and Deploy**. Wait for the first build to finish.
+6. Open the project → **Custom domains** → **Set up a custom domain**.
+7. Enter **`builtby.byhandbook.com`**. Cloudflare will add the DNS record if `byhandbook.com` is already on Cloudflare (it should be).
+8. Verify these URLs return 200:
+   - `https://builtby.byhandbook.com/v1/credit.js`
+   - `https://builtby.byhandbook.com/v1/credit-animate.js` (only if using `data-animate`)
+   - `https://builtby.byhandbook.com/v1/assets/hb-hover-w.json` (only if using `data-animate`)
 
-## Local preview
+After that, every push to `main` redeploys automatically.
+
+### Smoke test
+
+Paste the embed snippet into any HTML page. Confirm the icon and label render, the theme looks right, and clicking the link opens byhandbook.com with the UTM parameters you expect.
+
+---
+
+## Develop locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The preview page shows light and dark variants side by side.
-
-Production build:
+Open [http://localhost:5173](http://localhost:5173).
 
 ```bash
-npm run build
+npm run build      # outputs to dist/v1/
+npm run typecheck
 ```
 
-Output:
-
-- `dist/v1/credit.js` (~3 KB gzip — static default)
-- `dist/v1/credit-animate.js` (optional — only when `data-animate` is set)
-- `dist/v1/assets/hb-hover-w.json` (optional — loaded on first hover with animate)
-
-Deploy the **`dist`** folder to Cloudflare Pages. Files will be served at `/v1/credit.js` on your custom domain.
-
-## Deploy
-
-Hosting lives on **`builtby.byhandbook.com`** so it stays separate from the main site on `byhandbook.com`.
-
-### 1. Cloudflare Pages (recommended)
-
-1. In Cloudflare Dashboard → **Workers & Pages** → **Create** → **Connect to Git**
-2. Select the `byhandbook/built-by` repository
-3. Build settings:
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-4. Deploy, then add custom domain: **`builtby.byhandbook.com`**
-5. In DNS for `byhandbook.com`, add a CNAME: `builtby` → your `*.pages.dev` hostname (Cloudflare usually does this when you attach the domain)
-
-After deploy, verify:
-
-- `https://builtby.byhandbook.com/v1/credit.js`
-- `https://builtby.byhandbook.com/v1/credit-animate.js` (optional)
-- `https://builtby.byhandbook.com/v1/assets/hb-hover-w.json` (optional)
-
-**Version path:** Client embeds use `/v1/credit.js`. Run `npm run build` — the bundle is staged under `dist/v1/` automatically. Point Cloudflare Pages at the `dist` output directory.
-
-### 2. Test on a real page
-
-Paste the embed snippet into any site footer (or a static HTML file). Use `data-theme` to match the footer background. Click through and confirm the byhandbook.com URL includes the UTM params you expect.
-
-### 3. Registry worker (optional)
-
-The embed can send a one-time-per-session ping (`host`, `theme`, optional `project`) to a Cloudflare Worker for an install list. This is **optional** — the embed works without it. See [`worker/`](./worker/) if you want that later at higher volume. You do not need it to ship v1.
-
-## Project structure
-
-```
-src/        Web component and loader
-assets/     Lottie animation
-dist/       Production bundle (generated)
-worker/     Optional install registry (Cloudflare)
-docs/       Additional embed notes
-```
+---
 
 ## License
 

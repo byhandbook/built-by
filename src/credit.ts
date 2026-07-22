@@ -7,7 +7,6 @@ import {
   resolveScriptBase,
   type CreditTheme,
 } from "./config";
-import { sendRegistryPing } from "./ping";
 import type { AnimationItem } from "lottie-web";
 
 const H_PATHS = `
@@ -213,13 +212,6 @@ export class HandbookCredit extends HTMLElement {
 
     const link = shadow.querySelector(".credit");
     if (!(link instanceof HTMLAnchorElement)) return;
-
-    sendRegistryPing({
-      host: window.location.hostname,
-      project,
-      theme,
-      version: "1",
-    });
 
     if (!useAnimate) return;
 

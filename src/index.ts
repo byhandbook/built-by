@@ -1,5 +1,4 @@
 import { registerHandbookCredit, upgradeMountPoints } from "./credit";
-import { sendRegistryPing } from "./ping";
 
 registerHandbookCredit();
 
@@ -13,4 +12,4 @@ if (document.readyState === "loading") {
   boot();
 }
 
-export { registerHandbookCredit, upgradeMountPoints, sendRegistryPing };
+export { registerHandbookCredit, upgradeMountPoints };
